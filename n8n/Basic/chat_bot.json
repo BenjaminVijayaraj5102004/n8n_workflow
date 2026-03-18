@@ -1,0 +1,150 @@
+{
+  "name": "chat_bot",
+  "nodes": [
+    {
+      "parameters": {
+        "model": "qwen/qwen3-32b",
+        "options": {
+          "maxTokensToSample": 4096,
+          "temperature": 0.9
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -768,
+        32
+      ],
+      "id": "58568b61-717f-48a2-b6ba-853158a31fca",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "eMgFKNDIvkmykXzx",
+          "name": "Groq account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "54bb4e6b-45fa-4267-af28-ad70ec113231",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -992,
+        -192
+      ],
+      "id": "e59291d7-8f4e-4bf8-904b-d4f05bcaeaae",
+      "name": "Webhook",
+      "webhookId": "54bb4e6b-45fa-4267-af28-ad70ec113231"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -352,
+        -192
+      ],
+      "id": "db0306e0-5058-4ce1-b57f-c0b2b4bb79d4",
+      "name": "Respond to Webhook",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.body.sessionId }}",
+        "contextWindowLength": 100
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -560,
+        48
+      ],
+      "id": "2c2f2e5f-8fff-40a5-a275-9d8ca83fef82",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.chatInput}}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -704,
+        -192
+      ],
+      "id": "6422f9dd-e229-4c56-8efe-9ca9dba080bb",
+      "name": "AI Agent"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "e442e92d-8064-46a3-9c7a-dfa002be27ca",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0deec8a14af18d2dba77080ac78321861cfe160e1088868e13a78f1f0ef034ee"
+  },
+  "id": "IAQDIpfR7Uyyd1D3",
+  "tags": []
+}
