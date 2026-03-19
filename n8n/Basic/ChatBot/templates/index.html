@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qwen 3.0 Pro - AI Agent</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --bg: #0f172a;
+            --glass: rgba(255, 255, 255, 0.03);
+            --bot-bubble: #1e293b;
+            --user-bubble: #4f46e5;
+        }
+
+        body {
+            background: var(--bg);
+            font-family: 'Inter', system-ui, sans-serif;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+
+        .chat-container {
+            width: 450px;
+            height: 700px;
+            background: var(--glass);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 32px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+            position: relative;
+        }
+
+        .header {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+
+        .clear-btn {
+            position: absolute;
+            right: 20px;
+            top: 35px;
+            background: none;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #94a3b8;
+            font-size: 10px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        .clear-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin-bottom: 8px;
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+            border: 2px solid var(--primary);
+            object-fit: cover;
+        }
+
+        .chat-window {
+            flex: 1;
+            overflow-y: auto;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            scroll-behavior: smooth;
+        }
+
+        .msg {
+            padding: 14px 18px;
+            border-radius: 20px;
+            font-size: 14px;
+            line-height: 1.6;
+            max-width: 80%;
+            animation: slideUp 0.3s ease-out forwards;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .bot {
+            background: var(--bot-bubble);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .user {
+            background: var(--user-bubble);
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+        }
+
+        .typing {
+            padding: 0 30px 20px;
+            font-size: 12px;
+            color: #6366f1;
+            display: none;
+            gap: 4px;
+            font-weight: 500;
+        }
+
+        .input-area {
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            display: flex;
+            gap: 12px;
+            border-bottom-left-radius: 32px;
+            border-bottom-right-radius: 32px;
+        }
+
+        input {
+            flex: 1;
+            background: #111827;
+            border: 1px solid #374151;
+            padding: 14px 20px;
+            border-radius: 16px;
+            color: white;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+        }
+
+        button#send-btn {
+            background: var(--primary);
+            border: none;
+            padding: 0 24px;
+            border-radius: 16px;
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .chat-window::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .chat-window::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="chat-container">
+        <button class="clear-btn" onclick="clearChat()">Clear</button>
+        <div class="header">
+            <img src="data:image/jpeg;base64,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"
+                class="avatar" alt="AI Avatar">
+            <div style="font-weight: 700; font-size: 16px;">QWEN 3.0 AGENT</div>
+            <div style="font-size: 11px; color: #6366f1; margin-top: 4px;">● ONLINE</div>
+        </div>
+
+        <div id="chat-window" class="chat-window">
+            <div class="msg bot">System ready. State your request.</div>
+        </div>
+
+        <div id="typing" class="typing">Agent is analyzing...</div>
+
+        <form id="chat-form" class="input-area">
+            <input type="text" id="user-input" placeholder="Type message..." autocomplete="off" required>
+            <button type="submit" id="send-btn">SEND</button>
+        </form>
+    </div>
+
+    <script>
+        const chatForm = document.getElementById('chat-form');
+        const chatWindow = document.getElementById('chat-window');
+        const userInput = document.getElementById('user-input');
+        const typing = document.getElementById('typing');
+
+        function addMessage(text, side) {
+            const div = document.createElement('div');
+            div.className = `msg ${side}`;
+            div.innerText = text;
+            chatWindow.appendChild(div);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+
+        function clearChat() {
+            chatWindow.innerHTML = '<div class="msg bot">Memory cleared. How can I help?</div>';
+        }
+
+        chatForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            addMessage(message, 'user');
+            userInput.value = '';
+            typing.style.display = 'block';
+
+            try {
+                const response = await fetch('/send_message', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chatInput: message, sessionId: "ben_001" })
+                });
+
+                const data = await response.json();
+
+                // Extract raw reply
+                let reply = data.output || data.text || data.response || "No response received.";
+
+                // --- THE CLEANER LOGIC ---
+                // If the reply contains a </think> tag, only take everything AFTER it
+                if (reply.includes("</think>")) {
+                    reply = reply.split("</think>").pop().trim();
+                } else if (reply.includes("<think>")) {
+                    // If it started thinking but didn't finish, show nothing or a default
+                    reply = "Processing...";
+                }
+
+                addMessage(reply, 'bot');
+
+            } catch (err) {
+                addMessage("Error connecting to server.", 'bot');
+            } finally {
+                typing.style.display = 'none';
+            }
+        };
+    </script>
+</body>
+
+</html>
